@@ -1,64 +1,80 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class StudentDataPage extends StatefulWidget {
-  final Map<String, String> data;
-
-  const StudentDataPage({Key? key, required this.data}) : super(key: key);
-
-  static List<Map<String, String>> savedData = [];
+  const StudentDataPage({Key? key}) : super(key: key);
 
   @override
   _StudentDataPageState createState() => _StudentDataPageState();
 }
 
 class _StudentDataPageState extends State<StudentDataPage> {
+  final supabase = Supabase.instance.client;
+
+  List<Map<String, dynamic>> _students = [];
+  bool _loading = true;
+
   @override
   void initState() {
     super.initState();
-
-    // Pastikan kita memeriksa apakah data sudah ada di dalam savedData sebelum menambahkannya
-    if (widget.data.isNotEmpty &&
-        widget.data['nama'] != null &&
-        widget.data['nisn'] != null) {
-      // Cek apakah data sudah ada di savedData
-      bool dataAlreadyExists = StudentDataPage.savedData.any(
-        (item) => item['nisn'] == widget.data['nisn'],
-      ); // Misalnya kita cek berdasarkan NISN yang unik
-
-      if (!dataAlreadyExists) {
-        // Menambah data hanya jika data belum ada
-        setState(() {
-          StudentDataPage.savedData.add(widget.data);
-        });
-      } else {
-        print("Data dengan NISN ${widget.data['nisn']} sudah ada.");
-      }
-    } else {
-      print("Data kosong atau tidak valid!");
-    }
-    // _loadSavedData();
+    _fetchStudents();
   }
 
-  // Fungsi untuk memuat data yang sudah disimpan
-  Future<void> _loadSavedData() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    List<String>? savedNISNList = prefs.getStringList('savedNISNList') ?? [];
+  Future<void> _fetchStudents() async {
+    try {
+      final response = await supabase
+    .from('siswa')
+    .select('''
+      siswa_id,
+      nisn,
+      nama_lengkap,
+      jenis_kelamin,
+      agama,
+      tempat_lahir,
+      tanggal_lahir,
+      no_hp,
+      nik,
+      alamat_siswa (
+        jalan,
+        rt,
+        rw,
+        dusun:dusun_id (
+          nama_dusun,
+          desa:desa_id (
+            nama_desa,
+            kode_pos,
+            kecamatan:kecamatan_id (
+              nama_kecamatan,
+              kabupaten:kabupaten_id (
+                nama_kabupaten,
+                provinsi:provinsi_id (nama_provinsi)
+              )
+            )
+          )
+        )
+      ),
+      wali (
+        nama_ayah,
+        nama_ibu,
+        nama_wali,
+        alamat_wali
+      )
+    ''');
 
-    // Memuat data dari SharedPreferences
-    List<Map<String, String>> loadedData = [];
-    for (String nisn in savedNISNList) {
-      String? savedDataString = prefs.getString(nisn);
-      if (savedDataString != null && savedDataString.isNotEmpty) {
-        loadedData.add(
-          Map<String, String>.from(savedDataString as Map),
-        ); // Menambahkan data
-      }
+      // ✅ Ambil langsung datanya
+      final data = response as List;
+
+      debugPrint("✅ Data siswa: ${data.length}");
+      debugPrint("Isi data: $data");
+
+      setState(() {
+        _students = List<Map<String, dynamic>>.from(data);
+        _loading = false;
+      });
+    } catch (e) {
+      debugPrint("❌ Error fetch siswa: $e");
+      setState(() => _loading = false);
     }
-    setState(() {
-      StudentDataPage.savedData =
-          loadedData; // Menyimpan data yang dimuat ke dalam savedData
-    });
   }
 
   @override
@@ -68,77 +84,55 @@ class _StudentDataPageState extends State<StudentDataPage> {
         title: const Text("Lihat Data Siswa"),
         backgroundColor: const Color(0xFF5AB9A8),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              "Daftar Nama Siswa",
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF5AB9A8),
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            // Menampilkan daftar siswa
-            Card(
-              elevation: 4,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  children: List.generate(StudentDataPage.savedData.length, (
-                    index,
-                  ) {
-                    return ListTile(
-                      onTap: () => _showDetails(
-                        context,
-                        StudentDataPage.savedData[index],
+      body: _loading
+          ? const Center(child: CircularProgressIndicator())
+          : _students.isEmpty
+              ? const Center(child: Text("Belum ada data siswa."))
+              : Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        "Daftar Nama Siswa",
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF5AB9A8),
+                        ),
                       ),
-                      title: Text(
-                        StudentDataPage.savedData[index]['nama'] ?? "No Name",
+                      const SizedBox(height: 20),
+                      Expanded(
+                        child: ListView.builder(
+                          itemCount: _students.length,
+                          itemBuilder: (context, index) {
+                            final student = _students[index];
+                            return Card(
+                              elevation: 4,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: ListTile(
+                                onTap: () => _showDetails(context, student),
+                                title: Text(student['nama_lengkap'] ?? "No Name"),
+                                subtitle: Text(
+                                  "NISN: ${student['nisn'] ?? 'N/A'}",
+                                ),
+                              ),
+                            );
+                          },
+                        ),
                       ),
-                      subtitle: Text(
-                        "NISN: ${StudentDataPage.savedData[index]['nisn'] ?? "N/A"}",
-                      ),
-                    );
-                  }),
+                    ],
+                  ),
                 ),
-              ),
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 30,
-                  vertical: 12,
-                ),
-                textStyle: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15),
-                ),
-              ),
-              child: const Text("Kembali ke Form"),
-            ),
-          ],
-        ),
-      ),
     );
   }
 
-  // Menampilkan detail informasi siswa
-  void _showDetails(BuildContext context, Map<String, String> studentData) {
+  void _showDetails(BuildContext context, Map<String, dynamic> student) {
+    final alamat = student['alamat_siswa']?[0];
+    final wali = student['wali']?[0];
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -147,16 +141,41 @@ class _StudentDataPageState extends State<StudentDataPage> {
           content: SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: studentData.entries.map((entry) {
-                return Text('${entry.key}: ${entry.value}');
-              }).toList(),
+              children: [
+                Text("NISN: ${student['nisn']}"),
+                Text("Nama: ${student['nama_lengkap']}"),
+                Text("Jenis Kelamin: ${student['jenis_kelamin']}"),
+                Text("Agama: ${student['agama']}"),
+                Text("Tempat Lahir: ${student['tempat_lahir']}"),
+                Text("Tanggal Lahir: ${student['tanggal_lahir']}"),
+                Text("No HP: ${student['no_hp']}"),
+                Text("NIK: ${student['nik']}"),
+                const SizedBox(height: 10),
+                const Text("Alamat:", style: TextStyle(fontWeight: FontWeight.bold)),
+                if (alamat != null) ...[
+                  Text("Jalan: ${alamat['jalan'] ?? ''}"),
+                  Text("RT/RW: ${alamat['rt'] ?? ''}/${alamat['rw'] ?? ''}"),
+                  Text("Dusun: ${alamat['dusun']['nama_dusun'] ?? ''}"),
+                  Text("Desa: ${alamat['dusun']['desa']['nama_desa'] ?? ''}"),
+                  Text("Kecamatan: ${alamat['dusun']['desa']['kecamatan']['nama_kecamatan'] ?? ''}"),
+                  Text("Kabupaten: ${alamat['dusun']['desa']['kecamatan']['kabupaten']['nama_kabupaten'] ?? ''}"),
+                  Text("Provinsi: ${alamat['dusun']['desa']['kecamatan']['kabupaten']['provinsi']['nama_provinsi'] ?? ''}"),
+                  Text("Kode Pos: ${alamat['dusun']['desa']['kode_pos'] ?? ''}"),
+                ],
+                const SizedBox(height: 10),
+                const Text("Orang Tua / Wali:", style: TextStyle(fontWeight: FontWeight.bold)),
+                if (wali != null) ...[
+                  Text("Ayah: ${wali['nama_ayah'] ?? ''}"),
+                  Text("Ibu: ${wali['nama_ibu'] ?? ''}"),
+                  Text("Wali: ${wali['nama_wali'] ?? ''}"),
+                  Text("Alamat Wali: ${wali['alamat_wali'] ?? ''}"),
+                ],
+              ],
             ),
           ),
           actions: [
             TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
+              onPressed: () => Navigator.pop(context, true),
               child: const Text("Tutup"),
             ),
           ],
