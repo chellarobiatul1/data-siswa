@@ -15,15 +15,15 @@ Widget buildTextField({
       decoration: InputDecoration(
         labelText: label,
         labelStyle: const TextStyle(
-          color: Color(0xFF6C5B7B),
+          color: Color.fromARGB(255, 0, 0, 0),
           fontWeight: FontWeight.bold,
         ),
         focusedBorder: OutlineInputBorder(
-          borderSide: const BorderSide(color: Color(0xFF6C5B7B), width: 2),
+          borderSide: const BorderSide(color: Color.fromARGB(255, 0, 0, 0), width: 2),
           borderRadius: BorderRadius.circular(12),
         ),
         enabledBorder: OutlineInputBorder(
-          borderSide: const BorderSide(color: Color(0xFFEBEBEB), width: 2),
+          borderSide: const BorderSide(color: Color.fromARGB(255, 226, 224, 71), width: 2),
           borderRadius: BorderRadius.circular(12),
         ),
       ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:intl/intl.dart';
 import 'student_data_page.dart';
 
 class StudentFormPage extends StatefulWidget {
@@ -23,21 +24,22 @@ class _StudentFormPageState extends State<StudentFormPage> {
   final TextEditingController _dusunController = TextEditingController();
 
   // === PICK DATE ===
-  Future<void> _pickDate() async {
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: DateTime(2005),
-      firstDate: DateTime(1990),
-      lastDate: DateTime.now(),
-    );
-    if (picked != null) {
-      setState(() {
-        final formatted = "${picked.day}/${picked.month}/${picked.year}";
-        _dateController.text = formatted;
-        _formData['tanggal_lahir'] = formatted;
-      });
-    }
+Future<void> _pickDate() async {
+  final picked = await showDatePicker(
+    context: context,
+    initialDate: DateTime(2005),
+    firstDate: DateTime(1990),
+    lastDate: DateTime.now(),
+  );
+  if (picked != null) {
+    setState(() {
+      // Menggunakan DateFormat untuk memastikan formatnya sesuai PostgreSQL
+      final formatted = DateFormat('yyyy-MM-dd').format(picked);
+      _dateController.text = formatted; // Update ke format yang sesuai
+      _formData['tanggal_lahir'] = formatted; // Kirim tanggal dalam format YYYY-MM-DD ke Supabase
+    });
   }
+}
 
   // === SIMPAN KE SUPABASE ===
   Future<void> _saveFormData() async {
@@ -185,9 +187,12 @@ class _StudentFormPageState extends State<StudentFormPage> {
               focusNode: focusNode,
               decoration: InputDecoration(
                 labelText: "Dusun",
-                prefixIcon: Icon(Icons.home_work, color: Colors.pink.shade200),
+                prefixIcon: Icon(
+                  Icons.home_work,
+                  color: const Color.fromARGB(255, 16, 34, 98),
+                ),
                 filled: true,
-                fillColor: Colors.blue.shade50,
+                fillColor: const Color.fromARGB(255, 147, 200, 234),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(15),
                 ),
@@ -233,9 +238,9 @@ class _StudentFormPageState extends State<StudentFormPage> {
         keyboardType: inputType,
         decoration: InputDecoration(
           labelText: label,
-          prefixIcon: Icon(icon, color: Colors.pink.shade200),
+          prefixIcon: Icon(icon, color: const Color.fromARGB(255, 16, 34, 98)),
           filled: true,
-          fillColor: Colors.blue.shade50,
+          fillColor: const Color.fromARGB(255, 147, 200, 234),
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
         ),
         validator: (value) {
@@ -264,9 +269,9 @@ class _StudentFormPageState extends State<StudentFormPage> {
       child: DropdownButtonFormField<String>(
         decoration: InputDecoration(
           labelText: label,
-          prefixIcon: Icon(icon, color: Colors.pink.shade200),
+          prefixIcon: Icon(icon, color: const Color.fromARGB(255, 16, 34, 98)),
           filled: true,
-          fillColor: Colors.blue.shade50,
+          fillColor: const Color.fromARGB(255, 147, 200, 234),
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
         ),
         items: items
@@ -291,9 +296,12 @@ class _StudentFormPageState extends State<StudentFormPage> {
         onTap: _pickDate,
         decoration: InputDecoration(
           labelText: 'Tanggal Lahir',
-          prefixIcon: Icon(Icons.calendar_today, color: Colors.pink.shade200),
+          prefixIcon: Icon(
+            Icons.calendar_today,
+            color: const Color.fromARGB(255, 16, 34, 98),
+          ),
           filled: true,
-          fillColor: Colors.blue.shade50,
+          fillColor: const Color.fromARGB(255, 147, 200, 234),
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
         ),
         validator: (value) =>
@@ -307,8 +315,12 @@ class _StudentFormPageState extends State<StudentFormPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: Padding(
+          padding: EdgeInsets.all(3.0),
+          child: Image.asset('assets/images/Formulir.png'),
+        ),
         title: const Text("Form Data Siswa"),
-        backgroundColor: Colors.pink.shade200,
+        backgroundColor: const Color(0xFF5AB9A8),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -317,54 +329,54 @@ class _StudentFormPageState extends State<StudentFormPage> {
           child: Column(
             children: [
               buildTextField(
-              label: 'NISN',
-              keyName: 'nisn',
-              icon: Icons.numbers,
+                label: 'NISN',
+                keyName: 'nisn',
+                icon: Icons.numbers,
               ),
               buildTextField(
-              label: 'Nama Lengkap',
-              keyName: 'nama',
-              icon: Icons.person,
+                label: 'Nama Lengkap',
+                keyName: 'nama',
+                icon: Icons.person,
               ),
               buildDropdown(
-              label: 'Jenis Kelamin',
-              keyName: 'jenis_kelamin',
-              items: ['Laki-laki', 'Perempuan'],
-              icon: Icons.account_balance,
+                label: 'Jenis Kelamin',
+                keyName: 'jenis_kelamin',
+                items: ['Laki-laki', 'Perempuan'],
+                icon: Icons.account_balance,
               ),
               buildDropdown(
-              label: 'Agama',
-              keyName: 'agama',
-              items: ['Islam', 'Kristen', 'Katolik', 'Hindu', 'Budha'],
-              icon: Icons.account_balance,
+                label: 'Agama',
+                keyName: 'agama',
+                items: ['Islam', 'Kristen', 'Katolik', 'Hindu', 'Budha'],
+                icon: Icons.account_balance,
               ),
               buildTextField(
-              label: 'Tempat Lahir',
-              keyName: 'tempat_lahir',
-              icon: Icons.location_city,
+                label: 'Tempat Lahir',
+                keyName: 'tempat_lahir',
+                icon: Icons.location_city,
               ),
               buildDateField(),
               buildTextField(
-              label: 'No. Telp./HP',
-              keyName: 'telepon',
-              inputType: TextInputType.phone,
-              icon: Icons.phone,
+                label: 'No. Telp./HP',
+                keyName: 'telepon',
+                inputType: TextInputType.phone,
+                icon: Icons.phone,
               ),
               buildTextField(
-              label: 'NIK',
-              keyName: 'nik',
-              icon: Icons.perm_identity,
+                label: 'NIK',
+                keyName: 'nik',
+                icon: Icons.perm_identity,
               ),
 
               const SizedBox(height: 20),
               const Text(
-              "Alamat",
-              style: TextStyle(fontWeight: FontWeight.bold),
+                "Alamat",
+                style: TextStyle(fontWeight: FontWeight.bold),
               ),
               buildTextField(
-              label: 'Jalan',
-              keyName: 'jalan',
-              icon: Icons.streetview,
+                label: 'Jalan',
+                keyName: 'jalan',
+                icon: Icons.streetview,
               ),
               buildTextField(label: 'RT', keyName: 'rt', icon: Icons.home_work),
               buildTextField(label: 'RW', keyName: 'rw', icon: Icons.home_work),
@@ -373,135 +385,141 @@ class _StudentFormPageState extends State<StudentFormPage> {
 
               // Desa (auto)
               TextFormField(
-              controller: _desaController,
-              readOnly: true,
-              decoration: InputDecoration(
-                labelText: 'Desa',
-                prefixIcon: Icon(
-                Icons.location_city,
-                color: Colors.pink.shade200,
+                controller: _desaController,
+                readOnly: true,
+                decoration: InputDecoration(
+                  labelText: 'Desa',
+                  prefixIcon: Icon(
+                    Icons.location_city,
+                    color: const Color.fromARGB(255, 16, 34, 98),
+                  ),
+                  filled: true,
+                  fillColor: const Color.fromARGB(255, 147, 200, 234),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(15),
+                  ),
                 ),
-                filled: true,
-                fillColor: Colors.blue.shade50,
-                border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(15),
-                ),
-              ),
               ),
               const SizedBox(height: 12),
 
               // Kecamatan (auto)
               TextFormField(
-              controller: _kecamatanController,
-              readOnly: true,
-              decoration: InputDecoration(
-                labelText: 'Kecamatan',
-                prefixIcon: Icon(Icons.map, color: Colors.pink.shade200),
-                filled: true,
-                fillColor: Colors.blue.shade50,
-                border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(15),
+                controller: _kecamatanController,
+                readOnly: true,
+                decoration: InputDecoration(
+                  labelText: 'Kecamatan',
+                  prefixIcon: Icon(
+                    Icons.map,
+                    color: const Color.fromARGB(255, 16, 34, 98),
+                  ),
+                  filled: true,
+                  fillColor: const Color.fromARGB(255, 147, 200, 234),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(15),
+                  ),
                 ),
-              ),
               ),
               const SizedBox(height: 12),
 
               // Kabupaten (auto)
               TextFormField(
-              controller: _kabupatenController,
-              readOnly: true,
-              decoration: InputDecoration(
-                labelText: 'Kabupaten',
-                prefixIcon: Icon(
-                Icons.apartment,
-                color: Colors.pink.shade200,
+                controller: _kabupatenController,
+                readOnly: true,
+                decoration: InputDecoration(
+                  labelText: 'Kabupaten',
+                  prefixIcon: Icon(
+                    Icons.apartment,
+                    color: const Color.fromARGB(255, 16, 34, 98),
+                  ),
+                  filled: true,
+                  fillColor: const Color.fromARGB(255, 147, 200, 234),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(15),
+                  ),
                 ),
-                filled: true,
-                fillColor: Colors.blue.shade50,
-                border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(15),
-                ),
-              ),
               ),
               const SizedBox(height: 12),
 
               // Provinsi (auto)
               TextFormField(
-              controller: _provinsiController,
-              readOnly: true,
-              decoration: InputDecoration(
-                labelText: 'Provinsi',
-                prefixIcon: Icon(Icons.flag, color: Colors.pink.shade200),
-                filled: true,
-                fillColor: Colors.blue.shade50,
-                border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(15),
+                controller: _provinsiController,
+                readOnly: true,
+                decoration: InputDecoration(
+                  labelText: 'Provinsi',
+                  prefixIcon: Icon(
+                    Icons.flag,
+                    color: const Color.fromARGB(255, 16, 34, 98),
+                  ),
+                  filled: true,
+                  fillColor: const Color.fromARGB(255, 147, 200, 234),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(15),
+                  ),
                 ),
-              ),
               ),
               const SizedBox(height: 12),
 
               // Kode Pos (auto)
               TextFormField(
-              controller: _kodePosController,
-              readOnly: true,
-              decoration: InputDecoration(
-                labelText: 'Kode Pos',
-                prefixIcon: Icon(
-                Icons.local_post_office,
-                color: Colors.pink.shade200,
+                controller: _kodePosController,
+                readOnly: true,
+                decoration: InputDecoration(
+                  labelText: 'Kode Pos',
+                  prefixIcon: Icon(
+                    Icons.local_post_office,
+                    color: const Color.fromARGB(255, 16, 34, 98),
+                  ),
+                  filled: true,
+                  fillColor: const Color.fromARGB(255, 147, 200, 234),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(15),
+                  ),
                 ),
-                filled: true,
-                fillColor: Colors.blue.shade50,
-                border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(15),
-                ),
-              ),
               ),
 
               const SizedBox(height: 20),
               const Text(
-              "Data Orang Tua / Wali",
-              style: TextStyle(fontWeight: FontWeight.bold),
+                "Data Orang Tua / Wali",
+                style: TextStyle(fontWeight: FontWeight.bold),
               ),
               buildTextField(
-              label: 'Nama Ayah',
-              keyName: 'ayah',
-              icon: Icons.family_restroom,
-              isRequired: false,
+                label: 'Nama Ayah',
+                keyName: 'ayah',
+                icon: Icons.family_restroom,
+                isRequired: false,
               ),
               buildTextField(
-              label: 'Nama Ibu',
-              keyName: 'ibu',
-              icon: Icons.family_restroom,
-              isRequired: false,
+                label: 'Nama Ibu',
+                keyName: 'ibu',
+                icon: Icons.family_restroom,
+                isRequired: false,
               ),
               buildTextField(
-              label: 'Nama Wali (jika ada)',
-              keyName: 'wali',
-              icon: Icons.person_outline,
-              isRequired: false,
+                label: 'Nama Wali (jika ada)',
+                keyName: 'wali',
+                icon: Icons.person_outline,
+                isRequired: false,
               ),
               buildTextField(
-              label: 'Alamat Wali',
-              keyName: 'alamat_wali',
-              icon: Icons.location_on,
+                label: 'Alamat Wali',
+                keyName: 'alamat_wali',
+                icon: Icons.location_on,
               ),
 
               const SizedBox(height: 20),
               ElevatedButton(
-              onPressed: _submitForm,
-              child: const Text("Kirim"),
+                onPressed: _submitForm,
+                child: const Text("Kirim"),
               ),
               const SizedBox(height: 20),
               ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const StudentDataPage()),
-                );
-              },
-              child: const Text("Lihat Data"),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const StudentDataPage()),
+                  );
+                },
+                child: const Text("Lihat Data"),
               ),
             ],
           ),

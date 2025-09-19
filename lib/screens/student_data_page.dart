@@ -98,7 +98,7 @@ class _StudentDataPageState extends State<StudentDataPage> {
                         style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF5AB9A8),
+                          color: Color.fromARGB(255, 0, 0, 0),
                         ),
                       ),
                       const SizedBox(height: 20),
@@ -109,6 +109,7 @@ class _StudentDataPageState extends State<StudentDataPage> {
                             final student = _students[index];
                             return Card(
                               elevation: 4,
+                              color: const Color.fromARGB(255, 147, 200, 234),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),
                               ),
@@ -137,6 +138,7 @@ class _StudentDataPageState extends State<StudentDataPage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
+          backgroundColor: const Color.fromARGB(255, 220, 220, 220),
           title: const Text('Detail Informasi Siswa'),
           content: SingleChildScrollView(
             child: Column(
